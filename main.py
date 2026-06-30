@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from routers import interview
 import traceback
 
@@ -27,10 +28,5 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 app.include_router(interview.router)
 
-@app.get("/")
-def root():
-    return {
-        "message": "Hack2Hire Interview Engine is Live 🚀",
-        "docs": "/docs",
-        "health": "ok"
-    }
+# Serve the static UI files
+app.mount("/", StaticFiles(directory="static", html=True), name="static")

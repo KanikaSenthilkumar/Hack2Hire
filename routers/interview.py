@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from models.interview import StartInterviewRequest, AnswerSubmission, QuestionResponse, DifficultyLevel
 from models.scoring import FinalReport
 from engine.question_gen import generate_question
@@ -6,9 +6,38 @@ from engine.evaluator import evaluate_answer
 from engine.adaptive import get_next_difficulty, should_terminate, update_consecutive_low
 from engine.report_gen import generate_final_report
 import uuid
+import PyPDF2
+import io
 
 router = APIRouter(prefix="/interview", tags=["Interview"])
 sessions = {}
+
+@router.post("/upload-resume")
+async def upload_resume(file: UploadFile = File(...)):
+    if not file.filename.endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    try:
+        content = await file.read()
+        pdf_file = io.BytesIO(content)
+        reader = PyPDF2.PdfReader(pdf_file)
+        text = ""
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted + "\n"
+        
+        cleaned_text = text.strip()
+        if not cleaned_text:
+            raise HTTPException(status_code=400, detail="No readable text found in the PDF")
+            
+        return {
+            "filename": file.filename,
+            "extracted_text": cleaned_text
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse PDF resume: {str(e)}")
 
 @router.post("/start")
 async def start_interview(request: StartInterviewRequest):

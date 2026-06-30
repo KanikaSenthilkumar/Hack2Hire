@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hack2Hire: AI Mock Interview Engine</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Background Ambient Glows -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <span class="pulse-dot"></span>
+                <h1>Hack2Hire <span class="gradient-text">AI Interview Engine</span></h1>
+            </div>
+            <div class="status-badge" id="app-status">Ready</div>
+        </header>
+
+        <!-- Onboarding Screen -->
+        <section id="onboarding-view" class="view-panel active">
+            <div class="glass-card instruction-card">
+                <h2>Welcome to your AI Mock Interview</h2>
+                <p>Prepare for your target job with adaptive questions tailored to your resume and experience. Upload your resume to extract text or paste it directly, configure settings, and begin your session.</p>
+            </div>
+
+            <div class="setup-grid">
+                <!-- Left Column: Resume & JD -->
+                <div class="glass-card input-section">
+                    <h3>1. Candidate Details & Documents</h3>
+                    
+                    <div class="input-group">
+                        <label for="candidate-name">Candidate Name</label>
+                        <input type="text" id="candidate-name" placeholder="John Doe" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Resume (PDF File)</label>
+                        <div class="file-dropzone" id="resume-dropzone">
+                            <span class="upload-icon">📄</span>
+                            <p>Drag & drop your PDF resume here, or <span class="highlight">browse</span></p>
+                            <span class="file-name-label" id="file-name-display">No file selected</span>
+                            <input type="file" id="resume-file-input" accept="application/pdf" style="display: none;">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="resume-text">Extracted Resume Text</label>
+                        <textarea id="resume-text" placeholder="Upload a PDF above to extract text, or paste your resume content directly here..." required></textarea>
+                    </div>
+                </div>
+
+                <!-- Right Column: Settings & JD -->
+                <div class="glass-card settings-section">
+                    <h3>2. Interview Profile & Options</h3>
+
+                    <div class="input-group">
+                        <label for="job-description">Job Description (Target Role)</label>
+                        <textarea id="job-description" class="jd-textarea" placeholder="Paste the target job description here. The AI will adapt questions to match these requirements..." required></textarea>
+                    </div>
+
+                    <div class="settings-slider-group">
+                        <div class="slider-row">
+                            <div class="label-row">
+                                <label for="total-questions">Total Questions</label>
+                                <span class="slider-value" id="questions-val">10</span>
+                            </div>
+                            <input type="range" id="total-questions" min="5" max="20" value="10">
+                        </div>
+
+                        <div class="slider-row">
+                            <div class="label-row">
+                                <label for="time-limit">Time Limit per Question</label>
+                                <span class="slider-value" id="time-val">120s</span>
+                            </div>
+                            <input type="range" id="time-limit" min="60" max="300" step="30" value="120">
+                        </div>
+                    </div>
+
+                    <button id="start-btn" class="btn primary-btn">
+                        <span>Launch Simulation 🚀</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interview View -->
+        <section id="interview-view" class="view-panel">
+            <div class="interview-header-bar">
+                <div class="progress-indicator">
+                    Question <span id="current-q-num" class="highlight">1</span> of <span id="total-q-num">10</span>
+                </div>
+                <div class="difficulty-indicator">
+                    Difficulty: <span id="difficulty-badge" class="badge-easy">EASY</span>
+                </div>
+            </div>
+
+            <div class="interview-layout">
+                <!-- Main Interview Area -->
+                <div class="interview-main">
+                    <div class="glass-card question-card">
+                        <span class="question-type" id="question-type-badge">Technical</span>
+                        <h2 id="interview-question">Generating your first interview question...</h2>
+                    </div>
+
+                    <div class="glass-card response-card">
+                        <label for="candidate-answer">Your Answer</label>
+                        <textarea id="candidate-answer" placeholder="Type your structured answer here. Take your time, explain your reasoning, and press submit when ready..."></textarea>
+                        
+                        <div class="response-actions">
+                            <span class="char-counter"><span id="char-count">0</span> characters</span>
+                            <button id="submit-answer-btn" class="btn primary-btn">Submit Answer & Continue</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Side Panel (Active Stats) -->
+                <div class="interview-sidebar">
+                    <div class="glass-card timer-card">
+                        <h3>Remaining Time</h3>
+                        <div class="timer-circle-container">
+                            <svg class="timer-svg" viewBox="0 0 100 100">
+                                <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
+                                <circle class="timer-progress" id="timer-progress-ring" cx="50" cy="50" r="45"></circle>
+                            </svg>
+                            <div class="timer-text" id="timer-countdown">120</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card logs-card">
+                        <h3>Interview Logs</h3>
+                        <div class="interview-logs-list" id="logs-list">
+                            <div class="log-item active">Session started</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Report View -->
+        <section id="report-view" class="view-panel">
+            <div class="report-header glass-card">
+                <div class="report-header-info">
+                    <h2>Mock Interview Scorecard</h2>
+                    <p>Candidate: <span id="report-candidate-name" class="highlight">John Doe</span></p>
+                    <div id="termination-banner" class="termination-alert" style="display: none;">
+                        <strong>Early Termination Alert:</strong> <span id="termination-reason">Poor performance threshold triggered.</span>
+                    </div>
+                </div>
+                
+                <div class="readiness-score-container">
+                    <div class="score-ring">
+                        <svg class="score-svg" viewBox="0 0 120 120">
+                            <circle class="score-bg" cx="60" cy="60" r="50"></circle>
+                            <circle class="score-progress" id="score-progress-ring" cx="60" cy="60" r="50"></circle>
+                        </svg>
+                        <div class="score-text">
+                            <span id="final-score">85</span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                    <div class="readiness-badges">
+                        <span id="badge-category" class="badge-category strong">Strong</span>
+                        <span id="badge-readiness" class="badge-readiness ready">Ready</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="report-grid">
+                <!-- Skill Breakdown -->
+                <div class="glass-card report-skills">
+                    <h3>Skill Area Breakdown</h3>
+                    <div id="skills-list" class="skills-list-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Strengths / Weaknesses -->
+                <div class="report-insights">
+                    <div class="glass-card insights-card strength-border">
+                        <h3 class="strength-text">Key Strengths</h3>
+                        <ul id="strengths-list" class="insights-list">
+                            <!-- Populated by JavaScript -->
+                        </ul>
+                    </div>
+
+                    <div class="glass-card insights-card weakness-border">
+                        <h3 class="weakness-text">Areas of Improvement</h3>
+                        <ul id="weaknesses-list" class="insights-list">
+                            <!-- Populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actionable Feedback -->
+            <div class="glass-card feedback-card">
+                <h3>Actionable Feedback & Roadmap</h3>
+                <ul id="actionable-feedback-list" class="feedback-list">
+                    <!-- Populated by JavaScript -->
+                </ul>
+                <div class="trend-section">
+                    Performance Trend: <span id="performance-trend-badge" class="badge-trend text-improving">Improving</span>
+                </div>
+            </div>
+
+            <div class="report-actions">
+                <button id="restart-btn" class="btn secondary-btn">Restart Simulation</button>
+            </div>
+        </section>
+
+        <!-- Loader / Overlay -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loader-container">
+                <div class="spinner"></div>
+                <p id="loading-message">Analyzing resume PDF...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
