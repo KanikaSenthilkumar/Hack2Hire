@@ -1,8 +1,9 @@
 from groq import Groq
-import json, os
+import os
 from models.interview import AnswerEvaluation
 from models.scoring import FinalReport, SkillScore
 from dotenv import load_dotenv
+from utils.helpers import extract_and_parse_json
 
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -81,13 +82,9 @@ Respond ONLY in this exact JSON format, no markdown, no extra text:
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3
     )
-    raw = r.choices[0].message.content.strip()
-    if "```" in raw:
-        raw = raw.split("```")[1]
-        if raw.startswith("json"): raw = raw[4:]
-    raw = raw.strip()
+    raw = r.choices[0].message.content
 
-    data = json.loads(raw)
+    data = extract_and_parse_json(raw)
 
     return FinalReport(
         candidate_name=candidate_name,

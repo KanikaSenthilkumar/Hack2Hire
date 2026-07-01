@@ -75,8 +75,16 @@ async def submit_answer(submission: AnswerSubmission):
     session = sessions.get(submission.session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    if session["is_terminated"]:
+    
+    is_ended = session["is_terminated"] or len(session["evaluations"]) >= session["total_questions"]
+    if is_ended:
         raise HTTPException(status_code=400, detail="Interview already ended")
+
+    if submission.question_id != session["current_question_number"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid question ID. Expected {session['current_question_number']}, got {submission.question_id}"
+        )
 
     evaluation = evaluate_answer(
         question=session["questions"][-1],
@@ -134,13 +142,15 @@ async def get_status(session_id: str):
     session = sessions.get(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    
+    is_ended = session["is_terminated"] or len(session["evaluations"]) >= session["total_questions"]
     return {
         "session_id": session_id,
         "candidate_name": session["candidate_name"],
         "current_question": session["current_question_number"],
         "total_questions": session["total_questions"],
         "current_difficulty": session["current_difficulty"],
-        "is_terminated": session["is_terminated"],
+        "is_terminated": is_ended,
         "questions_answered": len(session["evaluations"])
     }
 
